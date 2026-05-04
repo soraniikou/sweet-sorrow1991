@@ -4,77 +4,191 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>sweet sorrow — そばにいる</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Caveat:wght@600&display=swap" rel="stylesheet" />
 <style>
   * { margin: 0; padding: 0; box-sizing: border-box; }
   html, body { width: 100%; height: 100%; overflow: hidden; font-family: -apple-system, BlinkMacSystemFont, "Hiragino Sans", "メイリオ", sans-serif; }
-  body { position: relative; background: #d5e3e8; }
+  body { position: relative; background: #c8d8e8; }
   canvas#stream { position: fixed; inset: 0; width: 100%; height: 100%; z-index: 0; display: block; }
   .overlay { position: fixed; inset: 0; background: linear-gradient(to bottom, rgba(255,255,255,0.15) 0%, rgba(255,255,255,0) 30%, rgba(255,255,255,0) 70%, rgba(255,255,255,0.25) 100%); pointer-events: none; z-index: 1; }
   .content { position: relative; z-index: 2; width: 100%; height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 1.5rem; color: #3a5466; }
-  h1 { font-family: "Snell Roundhand", "Apple Chancery", "Segoe Script", "Bradley Hand", cursive; font-size: clamp(2.4rem, 7vw, 4rem); font-weight: 400; font-style: italic; letter-spacing: 0.03em; margin-bottom: 0.6rem; text-shadow: 0 1px 3px rgba(255,255,255,0.7); color: #2d4858; }
-  .subtitle { font-size: clamp(0.78rem, 2vw, 0.95rem); font-weight: 300; letter-spacing: 0.22em; margin-bottom: 3rem; opacity: 0.75; text-shadow: 0 1px 2px rgba(255,255,255,0.6); }
+  h1 { font-family: "Caveat", "Segoe Script", "Bradley Hand", cursive; font-size: clamp(2.8rem, 8vw, 4.5rem); font-weight: 600; font-style: normal; letter-spacing: 0.02em; margin-bottom: 0.6rem; text-shadow: 0 1px 2px rgba(255,255,255,0.45); color: #4a7fa8; }
+  .subtitle { font-size: clamp(0.78rem, 2vw, 0.95rem); font-weight: 300; letter-spacing: 0.22em; margin-bottom: 3rem; opacity: 0.82; text-shadow: 0 1px 2px rgba(255,255,255,0.6); }
   .buttons { display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap; }
   button { background: rgba(255, 255, 255, 0.55); backdrop-filter: blur(10px); border: 1px solid rgba(255, 255, 255, 0.8); color: #3a5466; padding: 0.85rem 2.4rem; font-size: 0.95rem; font-weight: 300; letter-spacing: 0.25em; border-radius: 999px; cursor: pointer; transition: all 0.5s ease; font-family: inherit; box-shadow: 0 4px 16px rgba(100, 130, 150, 0.1); }
   button:hover { background: rgba(255, 255, 255, 0.85); transform: translateY(-2px); }
   button.hidden { display: none; }
-  .whisper { margin-top: 2.5rem; font-size: 0.85rem; letter-spacing: 0.22em; opacity: 0; transition: opacity 1.2s ease; color: #4a6478; font-weight: 300; min-height: 1.2em; text-shadow: 0 1px 2px rgba(255,255,255,0.6); }
-  .whisper.show { opacity: 0.85; }
   body.playing .content { animation: breathing 6s ease-in-out infinite; }
   @keyframes breathing { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-4px); } }
+
+  :root { --dawn: 0; }
+
+  .dawn-layer {
+    position: fixed;
+    inset: 0;
+    z-index: 1;
+    pointer-events: none;
+    overflow: hidden;
+  }
+
+  .dawn-blur {
+    position: absolute;
+    inset: -20px;
+    opacity: calc(var(--dawn) * 0.92);
+    backdrop-filter: blur(calc(2px + var(--dawn) * 18px));
+    -webkit-backdrop-filter: blur(calc(2px + var(--dawn) * 18px));
+    background: linear-gradient(
+      185deg,
+      rgba(255, 228, 236, calc(var(--dawn) * 0.42)) 0%,
+      rgba(255, 218, 232, calc(var(--dawn) * 0.28)) 28%,
+      rgba(245, 220, 235, calc(var(--dawn) * 0.14)) 55%,
+      rgba(230, 235, 248, calc(var(--dawn) * 0.06)) 78%,
+      transparent 100%
+    );
+    transition: opacity 0.1s linear;
+  }
+
+  .dawn-sun {
+    position: absolute;
+    left: 50%;
+    top: 52%;
+    width: min(92vmin, 520px);
+    height: min(92vmin, 520px);
+    transform: translate(-50%, calc((1 - var(--dawn)) * 42vmin + var(--dawn) * -6vmin));
+    border-radius: 50%;
+    background: radial-gradient(
+      circle at 50% 48%,
+      rgba(255, 245, 238, calc(0.12 + var(--dawn) * 0.38)) 0%,
+      rgba(255, 210, 200, calc(var(--dawn) * 0.32)) 22%,
+      rgba(255, 185, 195, calc(var(--dawn) * 0.22)) 38%,
+      rgba(255, 200, 218, calc(var(--dawn) * 0.1)) 55%,
+      transparent 68%
+    );
+    filter: blur(calc(14px + var(--dawn) * 36px));
+    opacity: calc(0.2 + var(--dawn) * 0.85);
+  }
+
+  .dawn-pink {
+    position: absolute;
+    inset: 0;
+    opacity: var(--dawn);
+    background: radial-gradient(
+      ellipse 120% 85% at 50% 36%,
+      rgba(255, 200, 214, calc(var(--dawn) * 0.38)) 0%,
+      rgba(255, 230, 238, calc(var(--dawn) * 0.14)) 48%,
+      transparent 74%
+    );
+    mix-blend-mode: soft-light;
+  }
 </style>
 </head>
 <body>
 <canvas id="stream"></canvas>
 <div class="overlay"></div>
+<div class="dawn-layer" id="dawnLayer" aria-hidden="true">
+  <div class="dawn-blur"></div>
+  <div class="dawn-sun"></div>
+  <div class="dawn-pink"></div>
+</div>
 <div class="content">
   <h1>sweet sorrow</h1>
-  <p class="subtitle">そばに、誰かの声がある</p>
+  <p class="subtitle" id="tagline">ひとりの時間に、そばにいる声</p>
   <div class="buttons">
     <button id="listenBtn">Listen</button>
     <button id="stopBtn" class="hidden">Stop</button>
   </div>
-  <p class="whisper" id="whisper">　</p>
 </div>
 <audio id="audio" src="0504.mp3" loop preload="auto"></audio>
 <script>
 const canvas = document.getElementById('stream');
 const ctx = canvas.getContext('2d');
 let W, H, DPR, isPlaying = false, time = 0, flowAmount = 0;
+let playT0 = 0;
+
+function syncDawnProgress() {
+  if (!isPlaying || !playT0) {
+    document.documentElement.style.setProperty('--dawn', '0');
+    return;
+  }
+  const sec = (Date.now() - playT0) / 1000;
+  let p = 0;
+  if (sec >= 20) p = sec >= 50 ? 1 : (sec - 20) / 30;
+  document.documentElement.style.setProperty('--dawn', String(p));
+}
 function resize() { DPR = window.devicePixelRatio || 1; W = window.innerWidth; H = window.innerHeight; canvas.width = W * DPR; canvas.height = H * DPR; canvas.style.width = W + 'px'; canvas.style.height = H + 'px'; ctx.setTransform(DPR, 0, 0, DPR, 0, 0); }
 resize();
 window.addEventListener('resize', resize);
 function drawBase() {
   const grad = ctx.createLinearGradient(0, 0, 0, H);
-  grad.addColorStop(0, '#e8f0e8'); grad.addColorStop(0.35, '#dde7e3'); grad.addColorStop(0.55, '#c8d8d8'); grad.addColorStop(0.75, '#9fbac0'); grad.addColorStop(1, '#7fa0a8');
+  grad.addColorStop(0, '#e6f0f8'); grad.addColorStop(0.35, '#d4e6f2'); grad.addColorStop(0.55, '#b8d4e8'); grad.addColorStop(0.75, '#8eb8d4'); grad.addColorStop(1, '#5e94b8');
   ctx.fillStyle = grad; ctx.fillRect(0, 0, W, H);
-  drawSoftBlob(W*0.2, H*0.65, 280, 'rgba(180,210,200,0.18)');
-  drawSoftBlob(W*0.75, H*0.55, 320, 'rgba(150,190,200,0.15)');
-  drawSoftBlob(W*0.5, H*0.85, 400, 'rgba(120,160,180,0.13)');
-  drawSoftBlob(W*0.1, H*0.4, 240, 'rgba(200,220,210,0.20)');
+  drawSoftBlob(W*0.2, H*0.65, 280, 'rgba(150,195,230,0.22)');
+  drawSoftBlob(W*0.75, H*0.55, 320, 'rgba(120,175,215,0.18)');
+  drawSoftBlob(W*0.5, H*0.85, 400, 'rgba(90,150,195,0.16)');
+  drawSoftBlob(W*0.1, H*0.4, 240, 'rgba(185,215,240,0.24)');
 }
 function drawSoftBlob(x, y, r, color) { const g = ctx.createRadialGradient(x, y, 0, x, y, r); g.addColorStop(0, color); g.addColorStop(1, 'rgba(255,255,255,0)'); ctx.fillStyle = g; ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI*2); ctx.fill(); }
 function drawGrass() {
-  ctx.fillStyle = 'rgba(120,150,130,0.25)';
+  ctx.fillStyle = 'rgba(100,145,175,0.28)';
   ctx.beginPath(); ctx.moveTo(0, H*0.5);
   for (let x = 0; x <= W; x += 6) { ctx.lineTo(x, H*0.5 + Math.sin(x*0.012)*6 + Math.sin(x*0.04)*3); }
   ctx.lineTo(W, H*0.5); ctx.lineTo(0, H*0.5); ctx.fill();
-  ctx.fillStyle = 'rgba(95,125,105,0.35)';
+  ctx.fillStyle = 'rgba(75,125,160,0.38)';
   ctx.beginPath(); ctx.moveTo(0, H);
   for (let x = 0; x <= W; x += 6) { ctx.lineTo(x, H*0.92 + Math.sin(x*0.008)*8 + Math.sin(x*0.05)*3); }
   ctx.lineTo(W, H); ctx.fill();
 }
 const streamLines = [];
-for (let i = 0; i < 9; i++) { streamLines.push({ yRatio: 0.55 + (i/9)*0.35, amp: 8 + Math.random()*14, freq: 0.005 + Math.random()*0.008, phase: Math.random()*Math.PI*2, width: 0.6 + Math.random()*1.4, opacity: 0.18 + Math.random()*0.22 }); }
+for (let i = 0; i < 9; i++) {
+  streamLines.push({
+    yRatio: 0.55 + (i / 9) * 0.35,
+    amp: 9 + Math.random() * 14,
+    freq: 0.0045 + Math.random() * 0.007,
+    freq2: 0.011 + Math.random() * 0.018,
+    amp2: 3 + Math.random() * 7,
+    phase: Math.random() * Math.PI * 2,
+    phase2: Math.random() * Math.PI * 2,
+    width: 0.6 + Math.random() * 1.4,
+    opacity: 0.18 + Math.random() * 0.22,
+    slow1: 0.00035 + Math.random() * 0.0009,
+    slow2: 0.0002 + Math.random() * 0.00045,
+    swayAmp1: 1 + Math.random() * 2.2,
+    swayAmp2: 2.5 + Math.random() * 6,
+    curveXFreq: 0.00025 + Math.random() * 0.0011,
+    curveAmp: 5 + Math.random() * 16,
+    curvePhase: Math.random() * Math.PI * 2,
+    curveTime: 0.00006 + Math.random() * 0.00014,
+    rollFreq: 0.00035 + Math.random() * 0.0009,
+    rollAmp: 3 + Math.random() * 10,
+    rollPhase: Math.random() * Math.PI * 2,
+    rollTime: 0.00005 + Math.random() * 0.00012,
+    w2Drift: 0.00004 + Math.random() * 0.0001
+  });
+}
 function drawWaterLines() {
   streamLines.forEach((line) => {
-    ctx.strokeStyle = `rgba(255,255,255,${line.opacity * (0.4 + flowAmount*0.6)})`;
-    ctx.lineWidth = line.width; ctx.lineCap = 'round'; ctx.beginPath();
-    const baseY = H * line.yRatio, flowSpeed = time * 0.0006 * flowAmount;
-    for (let x = 0; x <= W; x += 3) {
-      const wave = Math.sin(x*line.freq + flowSpeed*4 + line.phase) * line.amp * (0.15 + flowAmount*0.85);
-      const subtle = Math.sin(time*0.0004 + line.phase) * 1.5;
-      const y = baseY + wave + subtle;
-      if (x === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+    ctx.strokeStyle = `rgba(200, 230, 252, ${line.opacity * (0.45 + flowAmount * 0.55)})`;
+    ctx.lineWidth = line.width;
+    ctx.lineCap = 'round';
+    ctx.beginPath();
+    const baseY = H * line.yRatio;
+    const flowSpeed = time * (0.00012 + flowAmount * 0.00055);
+    const motion = 0.38 + flowAmount * 0.62;
+    const phaseWobble = Math.sin(time * line.slow1 + line.phase2) * line.swayAmp1;
+    const vertSway = Math.sin(time * line.slow2 + line.phase) * line.swayAmp2;
+    for (let x = 0; x <= W; x += 2) {
+      const longCurve =
+        Math.sin(x * line.curveXFreq + time * line.curveTime + line.curvePhase) * line.curveAmp * motion;
+      const gentleRoll =
+        Math.sin(x * line.rollFreq + time * line.rollTime + line.rollPhase) * line.rollAmp * motion;
+      const w1 = Math.sin(x * line.freq + flowSpeed * 4 + line.phase + phaseWobble) * line.amp * motion;
+      const w2 =
+        Math.sin(x * line.freq2 + flowSpeed * 2.2 + line.phase2 + time * line.w2Drift) * line.amp2 * motion;
+      const y = baseY + longCurve + gentleRoll + w1 + w2 + vertSway;
+      if (x === 0) ctx.moveTo(x, y);
+      else ctx.lineTo(x, y);
     }
     ctx.stroke();
   });
@@ -88,12 +202,12 @@ function drawSparkles() {
     if (p.x > W+10) { p.x = -10; p.y = H*(0.55 + Math.random()*0.38); }
     if (p.y < H*0.5 || p.y > H*0.95) { p.y = H*(0.55 + Math.random()*0.38); }
     const tw = (Math.sin(p.twinkle)+1)*0.5;
-    ctx.fillStyle = `rgba(255,255,255,${p.opacity*flowAmount*tw})`;
+    ctx.fillStyle = `rgba(210, 235, 255, ${p.opacity*flowAmount*tw})`;
     ctx.beginPath(); ctx.arc(p.x, p.y, p.r, 0, Math.PI*2); ctx.fill();
   });
 }
 const leaves = [];
-for (let i = 0; i < 4; i++) { leaves.push({ x: Math.random()*1000, y: 500 + Math.random()*200, vx: 0.15 + Math.random()*0.25, rot: Math.random()*Math.PI*2, rotSpeed: (Math.random()-0.5)*0.005, size: 4 + Math.random()*4, color: `rgba(${130+Math.random()*40},${150+Math.random()*30},${110+Math.random()*30},0.5)` }); }
+for (let i = 0; i < 4; i++) { leaves.push({ x: Math.random()*1000, y: 500 + Math.random()*200, vx: 0.15 + Math.random()*0.25, rot: Math.random()*Math.PI*2, rotSpeed: (Math.random()-0.5)*0.005, size: 4 + Math.random()*4, color: `rgba(${95+Math.random()*35},${140+Math.random()*40},${175+Math.random()*35},0.48)` }); }
 function drawLeaves() {
   leaves.forEach((leaf) => {
     leaf.x += leaf.vx*flowAmount; leaf.rot += leaf.rotSpeed*flowAmount;
@@ -106,6 +220,7 @@ function loop() {
   const target = isPlaying ? 1 : 0;
   flowAmount += (target - flowAmount)*0.02;
   drawBase(); drawGrass(); drawWaterLines(); drawLeaves(); drawSparkles();
+  syncDawnProgress();
   time += 16;
   requestAnimationFrame(loop);
 }
@@ -113,26 +228,28 @@ loop();
 const audio = document.getElementById('audio');
 const listenBtn = document.getElementById('listenBtn');
 const stopBtn = document.getElementById('stopBtn');
-const whisper = document.getElementById('whisper');
-const messages = ['ひとりじゃない','そっと、ここにいる','声が、流れている','だいじょうぶ'];
-let messageIndex = 0, messageTimer = null;
-function showNextMessage() { whisper.classList.remove('show'); setTimeout(() => { whisper.textContent = messages[messageIndex % messages.length]; whisper.classList.add('show'); messageIndex++; }, 800); }
+const tagline = document.getElementById('tagline');
+const TAGLINE_TEXT = 'ひとりの時間に、そばにいる声';
 listenBtn.addEventListener('click', () => {
   audio.currentTime = 0;
   audio.play().then(() => {
-    isPlaying = true; document.body.classList.add('playing');
+    isPlaying = true;
+    playT0 = Date.now();
+    document.body.classList.add('playing');
     listenBtn.classList.add('hidden'); stopBtn.classList.remove('hidden');
-    showNextMessage(); messageTimer = setInterval(showNextMessage, 8000);
-  }).catch((e) => { whisper.textContent = '音声を読み込めませんでした'; whisper.classList.add('show'); console.error(e); });
+  }).catch((e) => {
+    tagline.textContent = '音声を読み込めませんでした';
+    console.error(e);
+    setTimeout(() => { tagline.textContent = TAGLINE_TEXT; }, 6000);
+  });
 });
 stopBtn.addEventListener('click', () => {
   audio.pause(); audio.currentTime = 0; isPlaying = false;
+  playT0 = 0;
+  document.documentElement.style.setProperty('--dawn', '0');
   document.body.classList.remove('playing');
   stopBtn.classList.add('hidden'); listenBtn.classList.remove('hidden');
-  if (messageTimer) { clearInterval(messageTimer); messageTimer = null; }
-  whisper.classList.remove('show');
-  setTimeout(() => { whisper.textContent = '　'; }, 1000);
-  messageIndex = 0;
+  tagline.textContent = TAGLINE_TEXT;
 });
 </script>
 </body>
