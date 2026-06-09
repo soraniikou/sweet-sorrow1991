@@ -29,7 +29,7 @@
   
   .subtitle { font-size: clamp(0.78rem, 2vw, 0.95rem); font-weight: 300; letter-spacing: 0.22em; margin-bottom: 3rem; opacity: 0.75; text-shadow: 0 1px 2px rgba(0,0,0,0.3); color: #b8ccdc; transition: opacity 10s ease; transform-style: preserve-3d; }
   .subtitle.fade-out { opacity: 0; }
-  .subtitle.emerge { animation: emergeFromDepth 12s ease-out forwards; }
+  .subtitle.emerge { font-size: clamp(0.858rem, 2.2vw, 1.045rem); animation: emergeFromDepth 12s ease-out forwards; }
   @keyframes emergeFromDepth {
     0% { opacity: 0; transform: scale(0.55) translateZ(-120px); filter: blur(6px); }
     100% { opacity: 0.75; transform: scale(1) translateZ(0); filter: blur(0); }
@@ -40,7 +40,7 @@
   button:active { transform: translateY(0); }
   button.hidden { display: none; }
   #listenBtn { padding: 0.765rem 2.16rem; font-size: 0.855rem; }
-  #stopBtn { padding: 0.765rem 2.16rem; font-size: 0.855rem; background: rgba(255, 255, 255, 0.11); border-color: rgba(255, 255, 255, 0.24); color: #c5d2e0; box-shadow: 0 4px 16px rgba(0, 0, 0, 0.28); }
+  #stopBtn { padding: 0.6885rem 1.944rem; font-size: 0.7695rem; background: rgba(255, 255, 255, 0.11); border-color: rgba(255, 255, 255, 0.24); color: #c5d2e0; box-shadow: 0 4px 16px rgba(0, 0, 0, 0.28); }
   #stopBtn:hover { background: rgba(255, 255, 255, 0.17); }
   body.playing .content { animation: breathing 6s ease-in-out infinite; }
   @keyframes breathing { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-4px); } }
