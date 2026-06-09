@@ -76,11 +76,16 @@
 <script>
 const canvas = document.getElementById('stream');
 const ctx = canvas.getContext('2d');
-let W, H, DPR, isPlaying = false, time = 0, flowAmount = 0;
+let W, H, DPR, isPlaying = false, waveTime = 0, flowAmount = 0;
 let playT0 = 0;
 let audioUnlocked = false;
 let darkProgress = 0;
+let waveSpeedFactor = 1;
+let goodnightShown = false;
+let goodnightT0 = 0;
 const WAVE_TIME_SCALE = 1 / 3;
+const WAVE_SLOW_TARGET = 0.5;
+const WAVE_SLOW_MS = 12000;
 const BASE_GRAD = ['#3d5878', '#365070', '#2e4865', '#26405a', '#1e3850'];
 const DARK_GRAD = ['#243548', '#1e2d42', '#182536', '#121f30', '#0c1624'];
 
@@ -103,6 +108,14 @@ function syncDarkProgress() {
   const sec = (Date.now() - playT0) / 1000;
   darkProgress = Math.min(1, sec / 50);
   document.documentElement.style.setProperty('--dark', String(darkProgress));
+}
+function syncWaveSpeed() {
+  let target = 1;
+  if (goodnightShown) {
+    const progress = Math.min(1, (Date.now() - goodnightT0) / WAVE_SLOW_MS);
+    target = 1 - progress * (1 - WAVE_SLOW_TARGET);
+  }
+  waveSpeedFactor += (target - waveSpeedFactor) * 0.035;
 }
 function resize() { DPR = window.devicePixelRatio || 1; W = window.innerWidth; H = window.innerHeight; canvas.width = W * DPR; canvas.height = H * DPR; canvas.style.width = W + 'px'; canvas.style.height = H + 'px'; ctx.setTransform(DPR, 0, 0, DPR, 0, 0); }
 resize();
@@ -159,7 +172,7 @@ for (let i = 0; i < 9; i++) {
   });
 }
 function drawWaterLines() {
-  const wt = time * WAVE_TIME_SCALE;
+  const wt = waveTime;
   streamLines.forEach((line) => {
     ctx.strokeStyle = `rgba(200, 230, 252, ${line.opacity * (0.45 + flowAmount * 0.55)})`;
     ctx.lineWidth = line.width;
@@ -213,8 +226,9 @@ function loop() {
   flowAmount += (target - flowAmount)*0.02;
   drawBase(); drawGrass(); drawWaterLines(); drawLeaves(); drawSparkles();
   syncDarkProgress();
+  syncWaveSpeed();
   updateAudioFade();
-  time += 16;
+  waveTime += 16 * WAVE_TIME_SCALE * waveSpeedFactor;
   requestAnimationFrame(loop);
 }
 loop();
@@ -236,6 +250,8 @@ function resetTagline() {
     clearTimeout(taglineTimer);
     taglineTimer = null;
   }
+  goodnightShown = false;
+  goodnightT0 = 0;
   tagline.textContent = TAGLINE_TEXT;
   tagline.classList.remove('fade-out', 'emerge');
   tagline.style.opacity = '';
@@ -246,6 +262,8 @@ function startTaglineSequence() {
     clearTimeout(taglineTimer);
     taglineTimer = null;
   }
+  goodnightShown = false;
+  goodnightT0 = 0;
   tagline.textContent = TAGLINE_TEXT;
   tagline.classList.remove('fade-out', 'emerge');
   tagline.style.opacity = '';
@@ -258,6 +276,8 @@ function startTaglineSequence() {
     tagline.classList.remove('fade-out');
     tagline.textContent = GOODNIGHT_TEXT;
     tagline.classList.add('emerge');
+    goodnightShown = true;
+    goodnightT0 = Date.now();
   }, SUBTITLE_FADE_MS);
 }
 
@@ -341,6 +361,8 @@ stopBtn.addEventListener('click', () => {
   audio.volume = 1;
   playT0 = 0;
   darkProgress = 0;
+  waveSpeedFactor = 1;
+  waveTime = 0;
   document.documentElement.style.setProperty('--dark', '0');
   document.body.classList.remove('playing');
   stopBtn.classList.add('hidden');
