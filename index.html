@@ -10,7 +10,7 @@
   body { position: relative; background: #2a4258; }
   canvas#stream { position: fixed; inset: 0; width: 100%; height: 100%; z-index: 0; display: block; }
   .overlay { position: fixed; inset: 0; background: linear-gradient(to bottom, rgba(255,255,255,0.15) 0%, rgba(255,255,255,0) 30%, rgba(255,255,255,0) 70%, rgba(255,255,255,0.25) 100%); pointer-events: none; z-index: 1; }
-  .content { position: relative; z-index: 2; width: 100%; height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 1.5rem; color: #c0d4e6; }
+  .content { position: relative; z-index: 2; width: 100%; height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 1.5rem; color: #c0d4e6; perspective: 1000px; }
   
   /* 丸みのある筆記体（OS標準フォントの中で最も柔らかいものを優先） */
   h1 { 
@@ -20,90 +20,50 @@
     font-style: normal; 
     letter-spacing: 0.04em; 
     margin-bottom: 0.7rem; 
-    text-shadow: 0 1px 3px rgba(0,0,0,0.4), 0 0 30px rgba(180,210,240,0.5); 
-    color: #e0ecf5;
+    color: #1a3050;
+    filter: blur(2px);
+    text-shadow: 0 0 24px rgba(26, 48, 80, 0.55), 0 0 48px rgba(26, 48, 80, 0.35);
     transform: rotate(-1.5deg);
     display: inline-block;
   }
   
-  .subtitle { font-size: clamp(0.78rem, 2vw, 0.95rem); font-weight: 300; letter-spacing: 0.22em; margin-bottom: 3rem; opacity: 0.75; text-shadow: 0 1px 2px rgba(0,0,0,0.3); color: #b8ccdc; }
+  .subtitle { font-size: clamp(0.78rem, 2vw, 0.95rem); font-weight: 300; letter-spacing: 0.22em; margin-bottom: 3rem; opacity: 0.75; text-shadow: 0 1px 2px rgba(0,0,0,0.3); color: #b8ccdc; transition: opacity 10s ease; transform-style: preserve-3d; }
+  .subtitle.fade-out { opacity: 0; }
+  .subtitle.emerge { animation: emergeFromDepth 12s ease-out forwards; }
+  @keyframes emergeFromDepth {
+    0% { opacity: 0; transform: scale(0.55) translateZ(-120px); filter: blur(6px); }
+    100% { opacity: 0.75; transform: scale(1) translateZ(0); filter: blur(0); }
+  }
   .buttons { display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap; }
   button { background: rgba(255, 255, 255, 0.18); -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px); border: 1px solid rgba(255, 255, 255, 0.35); color: #e0ecf5; padding: 0.85rem 2.4rem; font-size: 0.95rem; font-weight: 300; letter-spacing: 0.25em; border-radius: 999px; cursor: pointer; transition: all 0.5s ease; font-family: inherit; box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2); -webkit-tap-highlight-color: transparent; touch-action: manipulation; }
   button:hover { background: rgba(255, 255, 255, 0.3); transform: translateY(-2px); }
   button:active { transform: translateY(0); }
   button.hidden { display: none; }
+  #listenBtn { padding: 0.765rem 2.16rem; font-size: 0.855rem; }
+  #stopBtn { padding: 0.765rem 2.16rem; font-size: 0.855rem; background: rgba(255, 255, 255, 0.11); border-color: rgba(255, 255, 255, 0.24); color: #c5d2e0; box-shadow: 0 4px 16px rgba(0, 0, 0, 0.28); }
+  #stopBtn:hover { background: rgba(255, 255, 255, 0.17); }
   body.playing .content { animation: breathing 6s ease-in-out infinite; }
   @keyframes breathing { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-4px); } }
 
-  :root { --dawn: 0; }
+  :root { --dark: 0; }
 
-  .dawn-layer {
+  .dark-layer {
     position: fixed;
     inset: 0;
     z-index: 1;
     pointer-events: none;
-    overflow: hidden;
-  }
-
-  .dawn-blur {
-    position: absolute;
-    inset: -20px;
-    opacity: calc(var(--dawn) * 0.92);
-    backdrop-filter: blur(calc(2px + var(--dawn) * 18px));
-    -webkit-backdrop-filter: blur(calc(2px + var(--dawn) * 18px));
     background: linear-gradient(
-      185deg,
-      rgba(255, 228, 236, calc(var(--dawn) * 0.42)) 0%,
-      rgba(255, 218, 232, calc(var(--dawn) * 0.28)) 28%,
-      rgba(245, 220, 235, calc(var(--dawn) * 0.14)) 55%,
-      rgba(230, 235, 248, calc(var(--dawn) * 0.06)) 78%,
-      transparent 100%
+      to bottom,
+      rgba(14, 24, 40, calc(var(--dark) * 0.45)) 0%,
+      rgba(8, 14, 26, calc(var(--dark) * 0.72)) 100%
     );
-    transition: opacity 0.1s linear;
-  }
-
-  .dawn-sun {
-    position: absolute;
-    left: 50%;
-    top: 52%;
-    width: min(92vmin, 520px);
-    height: min(92vmin, 520px);
-    transform: translate(-50%, calc((1 - var(--dawn)) * 42vmin + var(--dawn) * -6vmin));
-    border-radius: 50%;
-    background: radial-gradient(
-      circle at 50% 48%,
-      rgba(255, 245, 238, calc(var(--dawn) * 0.5)) 0%,
-      rgba(255, 210, 200, calc(var(--dawn) * 0.32)) 22%,
-      rgba(255, 185, 195, calc(var(--dawn) * 0.22)) 38%,
-      rgba(255, 200, 218, calc(var(--dawn) * 0.1)) 55%,
-      transparent 68%
-    );
-    filter: blur(calc(14px + var(--dawn) * 36px));
-    opacity: var(--dawn);
-  }
-
-  .dawn-pink {
-    position: absolute;
-    inset: 0;
-    opacity: var(--dawn);
-    background: radial-gradient(
-      ellipse 120% 85% at 50% 36%,
-      rgba(255, 200, 214, calc(var(--dawn) * 0.38)) 0%,
-      rgba(255, 230, 238, calc(var(--dawn) * 0.14)) 48%,
-      transparent 74%
-    );
-    mix-blend-mode: soft-light;
   }
 </style>
 </head>
 <body>
 <canvas id="stream"></canvas>
 <div class="overlay"></div>
-<div class="dawn-layer" id="dawnLayer" aria-hidden="true">
-  <div class="dawn-blur"></div>
-  <div class="dawn-sun"></div>
-  <div class="dawn-pink"></div>
-</div>
+<div class="dark-layer" id="darkLayer" aria-hidden="true"></div>
 <div class="content">
   <h1>sweet sorrow</h1>
   <p class="subtitle" id="tagline">ひとりの時間に、そばにいる声</p>
@@ -112,35 +72,53 @@
     <button id="stopBtn" class="hidden">Stop</button>
   </div>
 </div>
-<audio id="audio" src="0506.mp3" loop preload="metadata" playsinline webkit-playsinline></audio>
+<audio id="audio" src="0506.mp3" preload="metadata" playsinline webkit-playsinline></audio>
 <script>
 const canvas = document.getElementById('stream');
 const ctx = canvas.getContext('2d');
 let W, H, DPR, isPlaying = false, time = 0, flowAmount = 0;
 let playT0 = 0;
 let audioUnlocked = false;
+let darkProgress = 0;
+const WAVE_TIME_SCALE = 1 / 3;
+const BASE_GRAD = ['#3d5878', '#365070', '#2e4865', '#26405a', '#1e3850'];
+const DARK_GRAD = ['#243548', '#1e2d42', '#182536', '#121f30', '#0c1624'];
 
-function syncDawnProgress() {
+function mixHex(hex, targetHex, t) {
+  const parse = (h) => [parseInt(h.slice(1, 3), 16), parseInt(h.slice(3, 5), 16), parseInt(h.slice(5, 7), 16)];
+  const [r1, g1, b1] = parse(hex);
+  const [r2, g2, b2] = parse(targetHex);
+  const r = Math.round(r1 + (r2 - r1) * t);
+  const g = Math.round(g1 + (g2 - g1) * t);
+  const b = Math.round(b1 + (b2 - b1) * t);
+  return `rgb(${r}, ${g}, ${b})`;
+}
+
+function syncDarkProgress() {
   if (!isPlaying || !playT0) {
-    document.documentElement.style.setProperty('--dawn', '0');
+    darkProgress = 0;
+    document.documentElement.style.setProperty('--dark', '0');
     return;
   }
   const sec = (Date.now() - playT0) / 1000;
-  let p = 0;
-  if (sec >= 20) p = sec >= 50 ? 1 : (sec - 20) / 30;
-  document.documentElement.style.setProperty('--dawn', String(p));
+  darkProgress = Math.min(1, sec / 50);
+  document.documentElement.style.setProperty('--dark', String(darkProgress));
 }
 function resize() { DPR = window.devicePixelRatio || 1; W = window.innerWidth; H = window.innerHeight; canvas.width = W * DPR; canvas.height = H * DPR; canvas.style.width = W + 'px'; canvas.style.height = H + 'px'; ctx.setTransform(DPR, 0, 0, DPR, 0, 0); }
 resize();
 window.addEventListener('resize', resize);
 function drawBase() {
   const grad = ctx.createLinearGradient(0, 0, 0, H);
-  grad.addColorStop(0, '#3d5878'); grad.addColorStop(0.35, '#365070'); grad.addColorStop(0.55, '#2e4865'); grad.addColorStop(0.75, '#26405a'); grad.addColorStop(1, '#1e3850');
+  const stops = [0, 0.35, 0.55, 0.75, 1];
+  stops.forEach((stop, i) => {
+    grad.addColorStop(stop, mixHex(BASE_GRAD[i], DARK_GRAD[i], darkProgress));
+  });
   ctx.fillStyle = grad; ctx.fillRect(0, 0, W, H);
-  drawSoftBlob(W*0.2, H*0.65, 280, 'rgba(150,195,230,0.22)');
-  drawSoftBlob(W*0.75, H*0.55, 320, 'rgba(120,175,215,0.18)');
-  drawSoftBlob(W*0.5, H*0.85, 400, 'rgba(90,150,195,0.16)');
-  drawSoftBlob(W*0.1, H*0.4, 240, 'rgba(185,215,240,0.24)');
+  const blobAlpha = 1 - darkProgress * 0.55;
+  drawSoftBlob(W*0.2, H*0.65, 280, `rgba(150,195,230,${0.22 * blobAlpha})`);
+  drawSoftBlob(W*0.75, H*0.55, 320, `rgba(120,175,215,${0.18 * blobAlpha})`);
+  drawSoftBlob(W*0.5, H*0.85, 400, `rgba(90,150,195,${0.16 * blobAlpha})`);
+  drawSoftBlob(W*0.1, H*0.4, 240, `rgba(185,215,240,${0.24 * blobAlpha})`);
 }
 function drawSoftBlob(x, y, r, color) { const g = ctx.createRadialGradient(x, y, 0, x, y, r); g.addColorStop(0, color); g.addColorStop(1, 'rgba(255,255,255,0)'); ctx.fillStyle = g; ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI*2); ctx.fill(); }
 function drawGrass() {
@@ -181,24 +159,25 @@ for (let i = 0; i < 9; i++) {
   });
 }
 function drawWaterLines() {
+  const wt = time * WAVE_TIME_SCALE;
   streamLines.forEach((line) => {
     ctx.strokeStyle = `rgba(200, 230, 252, ${line.opacity * (0.45 + flowAmount * 0.55)})`;
     ctx.lineWidth = line.width;
     ctx.lineCap = 'round';
     ctx.beginPath();
     const baseY = H * line.yRatio;
-    const flowSpeed = time * (0.00012 + flowAmount * 0.00055);
+    const flowSpeed = wt * (0.00012 + flowAmount * 0.00055);
     const motion = 0.38 + flowAmount * 0.62;
-    const phaseWobble = Math.sin(time * line.slow1 + line.phase2) * line.swayAmp1;
-    const vertSway = Math.sin(time * line.slow2 + line.phase) * line.swayAmp2;
+    const phaseWobble = Math.sin(wt * line.slow1 + line.phase2) * line.swayAmp1;
+    const vertSway = Math.sin(wt * line.slow2 + line.phase) * line.swayAmp2;
     for (let x = 0; x <= W; x += 2) {
       const longCurve =
-        Math.sin(x * line.curveXFreq + time * line.curveTime + line.curvePhase) * line.curveAmp * motion;
+        Math.sin(x * line.curveXFreq + wt * line.curveTime + line.curvePhase) * line.curveAmp * motion;
       const gentleRoll =
-        Math.sin(x * line.rollFreq + time * line.rollTime + line.rollPhase) * line.rollAmp * motion;
+        Math.sin(x * line.rollFreq + wt * line.rollTime + line.rollPhase) * line.rollAmp * motion;
       const w1 = Math.sin(x * line.freq + flowSpeed * 4 + line.phase + phaseWobble) * line.amp * motion;
       const w2 =
-        Math.sin(x * line.freq2 + flowSpeed * 2.2 + line.phase2 + time * line.w2Drift) * line.amp2 * motion;
+        Math.sin(x * line.freq2 + flowSpeed * 2.2 + line.phase2 + wt * line.w2Drift) * line.amp2 * motion;
       const y = baseY + longCurve + gentleRoll + w1 + w2 + vertSway;
       if (x === 0) ctx.moveTo(x, y);
       else ctx.lineTo(x, y);
@@ -233,7 +212,8 @@ function loop() {
   const target = isPlaying ? 1 : 0;
   flowAmount += (target - flowAmount)*0.02;
   drawBase(); drawGrass(); drawWaterLines(); drawLeaves(); drawSparkles();
-  syncDawnProgress();
+  syncDarkProgress();
+  updateAudioFade();
   time += 16;
   requestAnimationFrame(loop);
 }
@@ -244,6 +224,58 @@ const listenBtn = document.getElementById('listenBtn');
 const stopBtn = document.getElementById('stopBtn');
 const tagline = document.getElementById('tagline');
 const TAGLINE_TEXT = 'ひとりの時間に、そばにいる声';
+const GOODNIGHT_TEXT = 'おやすみなさい';
+const FADE_OUT_SEC = 5;
+const FADE_IN_SEC = 3;
+const SUBTITLE_FADE_MS = 10000;
+let hasLooped = false;
+let taglineTimer = null;
+
+function resetTagline() {
+  if (taglineTimer) {
+    clearTimeout(taglineTimer);
+    taglineTimer = null;
+  }
+  tagline.textContent = TAGLINE_TEXT;
+  tagline.classList.remove('fade-out', 'emerge');
+  tagline.style.opacity = '';
+}
+
+function startTaglineSequence() {
+  if (taglineTimer) {
+    clearTimeout(taglineTimer);
+    taglineTimer = null;
+  }
+  tagline.textContent = TAGLINE_TEXT;
+  tagline.classList.remove('fade-out', 'emerge');
+  tagline.style.opacity = '';
+  void tagline.offsetWidth;
+  tagline.classList.add('fade-out');
+
+  taglineTimer = setTimeout(() => {
+    taglineTimer = null;
+    if (!isPlaying) return;
+    tagline.classList.remove('fade-out');
+    tagline.textContent = GOODNIGHT_TEXT;
+    tagline.classList.add('emerge');
+  }, SUBTITLE_FADE_MS);
+}
+
+function updateAudioFade() {
+  if (!isPlaying || audio.paused) return;
+  const dur = audio.duration;
+  if (!dur || !Number.isFinite(dur)) return;
+  const remaining = dur - audio.currentTime;
+  if (remaining <= FADE_OUT_SEC) {
+    audio.volume = Math.max(0, remaining / FADE_OUT_SEC);
+    return;
+  }
+  if (hasLooped && audio.currentTime < FADE_IN_SEC) {
+    audio.volume = Math.min(1, audio.currentTime / FADE_IN_SEC);
+    return;
+  }
+  audio.volume = 1;
+}
 
 function startPlayback() {
   isPlaying = true;
@@ -251,6 +283,19 @@ function startPlayback() {
   document.body.classList.add('playing');
   listenBtn.classList.add('hidden');
   stopBtn.classList.remove('hidden');
+  startTaglineSequence();
+}
+
+async function restartPlaybackLoop() {
+  if (!isPlaying) return;
+  hasLooped = true;
+  audio.currentTime = 0;
+  audio.volume = 0;
+  try {
+    await audio.play();
+  } catch (e) {
+    console.error('Loop restart failed:', e);
+  }
 }
 
 listenBtn.addEventListener('click', async () => {
@@ -259,6 +304,7 @@ listenBtn.addEventListener('click', async () => {
       audio.load();
       audioUnlocked = true;
     }
+    hasLooped = false;
     audio.currentTime = 0;
     audio.volume = 1.0;
     audio.muted = false;
@@ -273,7 +319,9 @@ listenBtn.addEventListener('click', async () => {
     setTimeout(async () => {
       try {
         audio.load();
+        hasLooped = false;
         audio.currentTime = 0;
+        audio.volume = 1.0;
         await audio.play();
         startPlayback();
       } catch (err) {
@@ -286,17 +334,27 @@ listenBtn.addEventListener('click', async () => {
 });
 
 stopBtn.addEventListener('click', () => {
-  audio.pause(); audio.currentTime = 0; isPlaying = false;
+  isPlaying = false;
+  hasLooped = false;
+  audio.pause();
+  audio.currentTime = 0;
+  audio.volume = 1;
   playT0 = 0;
-  document.documentElement.style.setProperty('--dawn', '0');
+  darkProgress = 0;
+  document.documentElement.style.setProperty('--dark', '0');
   document.body.classList.remove('playing');
-  stopBtn.classList.add('hidden'); listenBtn.classList.remove('hidden');
-  tagline.textContent = TAGLINE_TEXT;
+  stopBtn.classList.add('hidden');
+  listenBtn.classList.remove('hidden');
+  resetTagline();
+});
+
+audio.addEventListener('ended', () => {
+  restartPlaybackLoop();
 });
 
 audio.addEventListener('canplay', () => {
   if (tagline.textContent.includes('読み込めません')) {
-    tagline.textContent = TAGLINE_TEXT;
+    resetTagline();
   }
 });
 </script>
